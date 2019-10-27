@@ -2,24 +2,45 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
 
-Vue.use(Router)
+Vue.use(Router);
 
-export default new Router({
+export const asyncRouterMap = [
+  {
+    path: '/',
+    name: 'home',
+    component: Home
+  },
+  {
+    path: '/aboutMe',
+    name: 'aboutMe',
+    component: () => import('./views/AboutMe.vue'),
+  },
+    {
+        path: '/forMore',
+        name: 'forMore',
+        component: () => import('./views/ForMore.vue'),
+    },
+  {
+    path: '/aboutMe/publishList',
+    name: 'forMore',
+    component: () => import('./views/PublishList.vue'),
+  },
+  {
+    path: '/blank',
+    name: 'blank',
+    component: () => import('./views/Blank.vue'),
+  },
+  {
+    path: '/addInfo',
+    name: 'addInfo',
+    component: () => import('./views/AddInfo.vue'),
+  },
+];
+
+const router: any = new Router({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: Home
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
-    }
-  ]
-})
+  routes: asyncRouterMap
+});
+
+export default router
