@@ -24,12 +24,6 @@
             </van-popup>
             <van-cell-group>
                 <van-field
-                        v-model="listDetail.deliveryPoint.area"
-                        label="快递地点"
-                        placeholder="请输入快递地点"
-                        required
-                />
-                <van-field
                         v-model="listDetail.destination"
                         label="目的地"
                         placeholder="请输入快递送往的目的地"
@@ -65,7 +59,7 @@
                 />
                 <van-field
                         v-model="listDetail.publisher.pickName"
-                        label='取货人姓名(淘宝会员名)'
+                        label='取货人姓名'
                         placeholder="请输入您的淘宝会员名"
                         required
                 />
@@ -73,6 +67,12 @@
                         v-model="listDetail.pickCode"
                         label="取货号"
                         placeholder="请输入您的快递取货号"
+                        required
+                />
+                <van-field
+                        v-model="listDetail.telNumber"
+                        label="手机尾号"
+                        placeholder="请输入您的手机尾号"
                         required
                 />
             </van-cell-group>
@@ -103,6 +103,7 @@
                         maxlength="100"
                         placeholder="请留下备注"
                         show-word-limit
+                        required
                 />
             </van-cell-group>
         </div>
@@ -127,7 +128,7 @@
         }
     })
     export default class PublishList extends Vue {
-        @Provide() columns:string[] = ['中通快递', '圆通快递', '申通快递', '韵达快递', '顺丰速运', '京东物流', '德邦快递', '天天快递', '百世物流', '百世汇通', 'EMS邮政'];
+        @Provide() columns:string[] = [];
         @Provide() weightTypes:string[] = ['轻', '重', '超重'];
         @Provide() value: string = '';
         @Provide() showAreaPicker:boolean = false;
@@ -160,10 +161,12 @@
             deliveryPoint: {
                 deliveryPoint: '',
                 area: '',
+                id: ''
             },
             type: null,
             fee: '',
             remark: '',
+            telNumber:'',
             publisher: {
                 telphone: '12345678901',
                 email: '',
@@ -175,12 +178,26 @@
             },
             pickCode: '',
         };
+
+        mounted() {
+            // 获取快递点信息
+            this.$store.state.deliveryPoints.map((point: any) => {
+                this.columns.push(point.deliveryPoint);
+            })
+        }
+
         returnHome() {
             this.$router.go(-1);
         }
         onConfirm(value: any, type: string) {
-            if ( type === 'deliveryPoint' ) {
+            if ( type === 'deliveryPoint' ) {       // 选择快递点
                 (this as any).listDetail.deliveryPoint.deliveryPoint = value;
+                // 根据快递点名称获取快递点id
+                (this as any).$store.state.deliveryPoints.map((point: any) => {
+                    if (point.deliveryPoint === value) {
+                        (this as any).listDetail.deliveryPoint.id = point.id;
+                    }
+                })
                 this.showAreaPicker = false;
             } else if ( type === 'deadline' ) {
                 this.new_deadline = value;
@@ -205,26 +222,24 @@
             let params = new URLSearchParams();
             let listDetail = (this as any).listDetail;
             let objNull = true;
-            console.log("listDetail",listDetail);
+            // console.log("listDetail",listDetail);
             for (let key in listDetail) {
                 // console.log("key",listDetail[key]);
-                 if ( listDetail[key] && listDetail.deliveryPoint.area && listDetail.deliveryPoint.deliveryPoint && listDetail.publisher.pickName ) {    // 都不为空
+                 if ( !listDetail[key] ) {    // 有一项为空
+                    objNull = true;
+                 } else {
                      objNull = false;
-                     // console.log("111");
-                 } else {       // 某项为空
-                     objNull = key !== 'remark';        // 如果这一项是备注，则可以为空
                  }
             }
             if ( !objNull ) {
-                params.append('listInfo',(this as any).listDetail);
                 params.append('deadline',(this as any).new_deadline);
-                params.append('deliveryPointId',listDetail.deliveryPoint.area);
+                params.append('deliveryPointId',listDetail.deliveryPoint.id);
                 params.append('destination',listDetail.destination);
                 params.append('fee',listDetail.fee);
                 params.append('pickCode',listDetail.pickCode);
                 params.append('pickName',listDetail.publisher.pickName);
                 params.append('remark',listDetail.remark);
-                params.append('tailNumber',listDetail.publisher.telphone);
+                params.append('tailNumber',listDetail.telNumber);
                 params.append('type',(this as any).TypeToNum(listDetail.type));
 
                 (this as any).$axios.post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/commit`, params, {
@@ -233,11 +248,13 @@
                     }
                 })
                     .then((res: any) => {
-                        console.log(res);
+                        console.log("发布订单",res);
                         if (res.data.status === 'success') {
-                            Toast.success("提交成功");
+                            Toast.success("发布成功");
+                            // 跳转到首页
+                            this.$router.push({path:'/'});
                         } else {
-                            Toast.fail(res.data.errorMsg);
+                            Toast.fail(res.data.data.errorMsg);
                         }
                     })
                     .catch((err: any) => {

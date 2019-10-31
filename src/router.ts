@@ -22,7 +22,7 @@ export const asyncRouterMap = [
     },
   {
     path: '/aboutMe/publishList',
-    name: 'forMore',
+    name: 'publishList',
     component: () => import('./views/PublishList.vue'),
   },
   {
@@ -37,6 +37,7 @@ export const asyncRouterMap = [
   },
 ];
 
+// @ts-ignore
 const router: any = new Router({
   mode: 'history',
   base: process.env.BASE_URL,

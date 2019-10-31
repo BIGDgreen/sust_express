@@ -8,7 +8,10 @@ export default new Vuex.Store({
     // 用户信息
     userInfo: {},
     userId: '',
-    userRole: '' // 用户身份  sponsor或receiver
+    userRole: '', // 用户身份  sponsor或receiver
+    deliveryPoints: [],  // 快递点
+    listId: '',  // 订单id
+    disableReceive: false
   },
   mutations: {
     SET_USERINFO(state,userInfo){
@@ -20,6 +23,15 @@ export default new Vuex.Store({
     },
     SET_USERROLE(state,userRole){
       state.userRole = userRole;
+    },
+    SET_DELIVERYPOINTS(state,deliveryPoints){
+      state.deliveryPoints = deliveryPoints;
+    },
+    SET_LISTID(state,listId){
+      state.listId = listId;
+    },
+    SET_DISABLERECEIVE(state,disableReceive){
+      state.disableReceive = disableReceive;
     }
   },
   actions: {
@@ -35,6 +47,12 @@ export default new Vuex.Store({
     },
     userRole(state){
       return state.userRole
+    },
+    deliveryPoints(state){
+      return state.deliveryPoints
+    },
+    listId(state){
+      return state.listId
     },
   }
 })

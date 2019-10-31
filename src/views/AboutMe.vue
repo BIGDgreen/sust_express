@@ -6,7 +6,7 @@
         </div>
         <div class="selfInfo">
             <div class="avatar">
-                <img src="http://b-ssl.duitang.com/uploads/item/201809/16/20180916120134_myspq.jpeg" alt="Avatar">
+                <img :src=userAvatar alt="Avatar">
             </div>
             <div class="lists_content">
                 <van-tabs v-model="active">
@@ -15,33 +15,36 @@
                             <div class="lists" v-for="(list,index) in createLists" @click="forMore_sponsor(index)">
                                 <div class="deliveryInfo">
                                     <div>
-                                        <b>{{list.deliveryPoint.area}} {{list.deliveryPoint.deliveryPoint}}</b>
+                                        <div><b>{{list.deliveryPoint.area}}</b></div>
+                                        <div><b>{{list.deliveryPoint.deliveryPoint}}</b></div>
                                     </div>
-                                    <div>截止时间&nbsp;&nbsp;{{list.deadline}}</div>
+                                    <div>截止时间&nbsp;&nbsp;{{list.deadline | formatDate}}</div>
                                 </div>
                                 <div class="destination">送至：{{list.destination}}</div>
                                 <div class="timeInfo">
-                                    发布时间：{{list.updateTime}}
+                                    发布时间：{{list.updateTime | formatDate}}
                                 </div>
                             </div>
                         </div>
-<!--                        <ListItem :lists="deliveryLists"></ListItem>-->
+                        <div class="noData" v-if="noLaunch">订单为空~</div>
                     </van-tab>
-                    <van-tab title="我加入的">
+                    <van-tab title="我接过的">
                         <div class="lists-wrapper">
-                            <div class="lists" v-for="list in joinLists" @click="forMore_receiver(index)">
+                            <div class="lists" v-for="(list,index) in joinLists" @click="forMore_receiver(index)">
                                 <div class="deliveryInfo">
                                     <div>
-                                        <b>{{list.deliveryPoint.area}} {{list.deliveryPoint.deliveryPoint}}</b>
+                                        <div><b>{{list.deliveryPoint.area}}</b></div>
+                                        <div><b>{{list.deliveryPoint.deliveryPoint}}</b></div>
                                     </div>
-                                    <div>截止时间&nbsp;&nbsp;{{list.deadline}}</div>
+                                    <div>截止时间&nbsp;&nbsp;{{list.deadline | formatDate}}</div>
                                 </div>
                                 <div class="destination">送至：{{list.destination}}</div>
                                 <div class="timeInfo">
-                                    发布时间：{{list.updateTime}}
+                                    发布时间：{{list.updateTime | formatDate}}
                                 </div>
                             </div>
                         </div>
+                        <div class="noData" v-if="noJoin">订单为空~</div>
                     </van-tab>
                 </van-tabs>
             </div>
@@ -55,45 +58,80 @@
 <script lang="ts">
     import {Vue, Provide, Component} from 'vue-property-decorator';
     import ListItem from '../components/ListItem.vue';
+    import {Toast} from 'vant';
+
     @Component({
         components:{
             ListItem
         }
     })
     export default class AboutMe extends Vue {
+        @Provide() userAvatar: string = '';
         @Provide() active: number = 0;
-        @Provide() createLists: Object[] = [
-            {
-                id:1,
-                updateTime: "2019.08.27 12:00",
-                deadline: "2018.10.29 16:04",
-                destination: "12公寓",
-                deliveryPoint: {
-                    deliveryPoint: "韵达",
-                    area: "二餐厅东侧菜鸟驿站"
-                },
-                fee: "￥5",
-            }
-        ];
-        @Provide() joinLists: Object[] = [
-            {
-                id:1,
-                updateTime: "2019.08.27 12:00",
-                deadline: "2018.10.29 16:04",
-                destination: "12公寓",
-                deliveryPoint: {
-                    deliveryPoint: "圆通",
-                    area: "八公寓后院"
-                },
-                fee: "￥2",
-            }
-        ];
+        @Provide() noLaunch: boolean = true;
+        @Provide() noJoin: boolean = true;
+        @Provide() createLists: Object[] = [];
+        @Provide() joinLists: Object[] = [];
         mounted() {
+            let userInfos = sessionStorage.getItem("userInfoStore") || "";
+            // console.info(JSON.parse(userInfos));
+            // 获取头像
+            this.userAvatar = JSON.parse(userInfos).avatar;
           // 获取与我有关的订单
+            let id = JSON.parse(userInfos).id;
+            // 我发起的
+            (this as any).$axios
+                .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/myLists`, {
+                    params: {
+                      page: 1,
+                      pagesize: 10
+                    }
+                })
+                .then((res: any) => {
+                    console.info("launch",res);
+                    if (res.data.status === 'success') {
+                        if (res.data.data.length === 0) {
+                            this.noLaunch = true;
+                        } else {
+                            this.noLaunch = false;
+                            this.createLists = res.data.data;
+                        }
+                    } else {
+                        Toast(res.data.errorMsg);
+                    }
+                })
+                .catch((err: any) => {
+                    console.error(err);
+                });
 
+            // 我加入的
+            (this as any).$axios
+            .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/theirList`, {
+                params: {
+                    page: 1,
+                    pagesize: 10
+                }
+            })
+            .then((res: any) => {
+                console.info("join",res);
+                if (res.data.status === 'success') {
+                    if (res.data.data.length === 0) {
+                        this.noJoin = true;
+                    } else {
+                        this.noJoin = false;
+                        this.joinLists = res.data.data;
+                    }
+                } else {
+                    Toast(res.data.errorMsg);
+                }
+            })
+            .catch((err: any) => {
+                console.error(err);
+            })
         }
         // 发起人查看订单详细信息
         private forMore_sponsor(index: number): void {
+            this.$store.commit('SET_LISTID',this.createLists[index].id);
             (this as any).$router.push({
                 name:'forMore',
                 params:{"role":"sponsor"}
@@ -103,10 +141,12 @@
         // 接单人查看订单详细信息
         private forMore_receiver(index: number): void {
             // this.$store.commit('SET_USERROLE','receiver');
+            this.$store.commit('SET_LISTID',this.joinLists[index].id);
             (this as any).$router.push({
                 name:'forMore',
                 params:{"role":"receiver"}
-            })
+            });
+            sessionStorage.setItem("list_id",this.joinLists[index].id);
         }
         // 发布订单
         private publishList() {
@@ -161,6 +201,11 @@
                 width: 100%;
                 margin: .68rem auto 0 auto;
             }
+        }
+        .noData {
+            color: #aaaaaa;
+            text-align: center;
+            margin-top: 30%
         }
         .plus-button{
             position: fixed;

@@ -73,6 +73,7 @@
                         .post((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/form',params)
                         .then((res: any) => {
                             console.log(res);
+                            this.$router.push({path:"/"});
                         })
                         .catch((err: any) => {
                             console.log(err);

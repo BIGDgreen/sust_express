@@ -1,6 +1,6 @@
 <template>
     <div class="blank">
-        blank page
+        加载中，请稍后...
     </div>
 </template>
 
@@ -17,7 +17,7 @@
             // 获取href中的access_token
             let href: string = window.location.href;
             if ( href ) {
-                let accessToken: string = href.match(/\?access_token=(.*)/)[1];
+                let accessToken: string = href.match(/\?SUST_TK=(.*)/)[1];
                 // console.log("token:",accessToken);
                 sessionStorage.setItem("token",accessToken);
                 (this as any).$axios
@@ -43,7 +43,9 @@
                                     username: res.data.data.thirdPartyId,
                                     password: res.data.data.avatar,
                                 };
-                                this.$store.commit('SET_USERINFO',Object.assign(res.data.data,userInfos));
+                                let userInfoStore = Object.assign(res.data.data,userInfos);
+                                this.$store.commit('SET_USERINFO',userInfoStore);
+                                sessionStorage.setItem("userInfoStore",JSON.stringify(userInfoStore));
 
                                 // 发送请求，传入用户名和密码
                                 let params = new URLSearchParams();
@@ -62,7 +64,7 @@
                                         }
                                     })
                                     .catch((error: any) => {
-                                        console.log("form_err",error);
+                                        console.error("form_err",error);
                                     })
                             }
                         } else {
@@ -70,7 +72,8 @@
                         }
                     })
                     .catch((err: any) => {
-                        Toast.fail('网络连接错误！');
+                        console.error(err);
+                        Toast.fail('网络连接错误');
                     });
             }
         }

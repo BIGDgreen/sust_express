@@ -51,9 +51,6 @@ html,body{
     .deliveryInfo{
       margin-bottom: .48rem;
       div:nth-child(1){
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
         font-size: 1.2rem;
         margin-bottom: .6rem;
         b{

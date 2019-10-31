@@ -8,7 +8,7 @@
             <div class="detail-wrapper">
                 <div class="bold-title">
                     <div>{{listDetail.deliveryPoint.area}}</div>
-                    <div>{{listDetail.deliveryPoint.deliveryPoint}}</div>
+                    <div style="margin-top: .6rem;">{{listDetail.deliveryPoint.deliveryPoint}}</div>
                 </div>
                 <div class="detail-info">
                     <div>目的地：<span class="fee">{{listDetail.destination}}</span></div>
@@ -18,8 +18,8 @@
                     <div>发布时间：{{listDetail.updateTime}}</div>
                     <div class="sponsor-info" v-if=" userRole === 'sponsor' ">
                         <!--发起人可查看的信息-->
-                        <div>快递号：5024</div>
-                        <div>手机尾号：1234</div>
+                        <div>快递号：{{listDetail.orderPickVO.pickCode}}</div>
+                        <div>手机号：{{listDetail.orderPickVO.tailNumber}}</div>
                     </div>
                     <div>备注：{{listDetail.remark}}</div>
                 </div>
@@ -35,22 +35,24 @@
                     </div>
                     <div class="role receiver" v-if=" userRole === 'receiver' ">
                         <!--如果是接单者，则联系发起人-->
-                        <button @click="clickReceive" :class="{'button_disabled': disableReceive}" :disabled="disableReceive">接单 ！</button>
+                        <button @click="clickReceive" :class="{'button_disabled': disableReceive}" :disabled="disableReceive">接单</button>
                     </div>
                 </div>
             </div>
-            <div class="more-info" v-if=" clickedReceive && userRole === 'receiver' ">
+            <div class="more-info" v-if=" clickedReceive && userRole === 'receiver' && viewMore">
                 <div>快递号</div>
-                <div class="express-number">5024</div>
+                <div class="express-number">{{listMore.pickCode}}</div>
                 <div>手机尾号</div>
-                <div class="express-number">1234</div>
+                <div class="express-number">{{listMore.tailNumber}}</div>
+                <div>发起人姓名</div>
+                <div class="express-number">{{listMore.pickName}}</div>
                 <div>发起人联系方式</div>
                 <div class="express-number">{{listDetail.publisher.telphone}}</div>
                 <div class="wranning">请妥善保管以上信息</div>
             </div>
             <div class="more-info" v-if="viewReceiver">
                 <div>接单人联系方式</div>
-                <div class="express-number">{{listDetail.receiver.telphone}}</div>
+                <div class="express-number">{{listDetail.receiver.telphone|| "暂无接单者~"}}</div>
             </div>
         </div>
         <div class="delete-page" v-if="deleted">订单已删除！</div>
@@ -69,39 +71,10 @@
         @Provide() private disabledList: boolean = false;   // 订单已完成按钮 禁用
         @Provide() private disableReceive: boolean = false;     // 接单按钮 禁用
         @Provide() private deleted: boolean = false;     // 订单删除状态
-        @Provide() private listDetail: object = {
-            // updateTime: '2019-08-26T13:28:25.000+0000',
-            // deadline: '2019-08-27T13:28:32.000+0000',
-            // destination: '2A311',
-            // deliveryPoint: {
-            //     deliveryPoint: '圆通',
-            //     area: '八公寓后院菜鸟驿站',
-            // },
-            // type: 1,
-            // fee: '3元',
-            // remark: '尽快！！！',
-            // publisher: {
-            //     telphone: '12345678901',
-            //     email: null,
-            //     registerMode: '',
-            //     thirdPartyId: '',
-            //     avatar: 'http://b-ssl.duitang.com/uploads/item/201809/16/20180916120134_myspq.jpeg',
-            //     displayName: 'Maira',
-            // },
-            // receiver: {
-            //     telphone: '12345678901',
-            //     email: null,
-            //     registerMode: '',
-            //     thirdPartyId: '',
-            //     avatar: '',
-            //     displayName: 'Maira',
-            // }
-        };
-        // beforeRouteEnter (to, from, next) {
-        //     next(vm => {
-        //         // 通过 `vm` 访问组件实例
-        //     })
-        // }
+        @Provide() private viewMore: boolean = false;     // 显示更多信息
+        @Provide() private listDetail: object = {};
+        @Provide() private listMore: object = {};
+
         mounted() {
             // 判断进入该页面的用户角色
             if (this.$route.params.role === 'receiver') {
@@ -112,15 +85,12 @@
                 this.userRole = 'sponsor';
             }
             // 获取指定订单的详细信息
-            let id = sessionStorage.getItem("list_id");
+            // let id = sessionStorage.getItem("list_id");
+            let id = this.$store.state.listId || sessionStorage.list_id;
             (this as any).$axios
-                .get((this as any).baseUrl+`/api/v1.0/SUSTDelivery/view/order/lists/${id}/info`,{
-                    headers:{
-                        'Authorization':sessionStorage.getItem('login_token')
-                    }
-                })
+                .get((this as any).baseUrl+`/api/v1.0/SUSTDelivery/view/order/lists/${id}/info`)
                 .then((res: any) => {
-                    console.log(res);
+                    console.log("订单详情",res);
                     if (res.data.status === 'success') {
                        // 转换时间格式
                         res.data.data.updateTime = (this as any).resolvingDate(res.data.data.updateTime);
@@ -128,6 +98,24 @@
                         // 将type 1 2 3 转为文字
                         res.data.data.type = ForMore.transformType(res.data.data.type);
                         this.listDetail = res.data.data;
+                        // 根据订单状态决定按钮状态（0异常1未接2已接3未完成4已完成5已删除）
+                        let status = res.data.data.status.status;
+                        switch (status) {
+                            case 4:
+                                this.disabledList = true;
+                                break;
+                            case 2:
+                                this.disableReceive = true;
+                                break;
+                            case 0:
+                                Toast.fail("订单异常");
+                                break;
+                            case 5:
+                                // 切换页面
+                                this.deleted = true;
+                                break;
+                            default:
+                        }
                     } else {
                         Toast(res.data.errorMsg);
                     }
@@ -150,23 +138,25 @@
                     // 接单按钮禁用
                     this.disableReceive = true;
                     // on confirm
-                    let params = new URLSearchParams();
-                    params.append("_method","PUT");
                     (this as any).clickedReceive = true;
-                    // 发送请求，更改订单状态为已接
                     let orderId = sessionStorage.getItem('list_id');
-                    const statusId = 2;
+                    let userInfo = sessionStorage.getItem("userInfoStore") || '';
+                    let user_id = JSON.parse(userInfo).id;
                     (this as any).$axios
-                        .post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/order/lists/${orderId}/status/${statusId}`, params, {
-                            headers:{
-                                'Authorization':sessionStorage.getItem('login_token')
+                        .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${user_id}/theirLists/${orderId}`)
+                        .then((res: any) => {
+                            console.info("接单",res);
+                            if (res.data.status === "success") {
+                                this.viewMore = true;
+                                this.listMore = res.data.data;
+                            } else {
+                                this.viewMore = false;
+                                Toast.fail(res.data.data.errorMsg);
+                                (this as any).listDetail.publisher.telphone = '';
                             }
                         })
-                        .then((res: any) => {
-                            console.info(res);
-                        })
                         .catch((err: any) => {
-                            console.info(err);
+                            Toast("网络连接错误");
                         });
                 }).catch(() => {
                     // on cancel
@@ -186,21 +176,19 @@
                 }).then(() => {
                     this.disabledList = true;
                     // on confirm
-                    let params = new URLSearchParams();
-                    params.append('_method', 'PUT');
                     (this as any).clickedReceive = true;
                     // 发送请求，更改订单状态为已完成
-                    let orderId = sessionStorage.getItem('list_id');
+                    // let orderId = sessionStorage.getItem('list_id');
+                    let orderId = this.$store.state.listId;
                     const statusId = 4;
                     (this as any).$axios
-                        .post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/order/lists/${orderId}/status/${statusId}`,params, {
-                            headers:{
-                                'Authorization':sessionStorage.getItem('login_token')
-                            }
-                        })
+                        .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/order/lists/${orderId}/status/${statusId}`)
                         .then((res: any) => {
                             console.log(res);
                             this.disabledList = true;
+                            if (res.data.status === 'success') {
+                                Toast.success("操作成功");
+                            }
                         })
                         .catch((err: any) => {
                             console.log(err);
@@ -218,29 +206,27 @@
                 message: '是否确定删除此订单？（操作不可撤回）'
             }).then(() => {
                 // on confirm
+                let userInfo = sessionStorage.getItem("userInfoStore") || '';
+                let user_id = JSON.parse(userInfo).id;
+                let orderId = this.$store.state.listId || sessionStorage.getItem("list_id");
                 // 发送请求，删除订单
-                let params = new URLSearchParams();
-                params.append("_method","PUT");
-                let orderId = sessionStorage.getItem("list_id");
-                const statusId = 5;
                 (this as any).$axios
-                    .post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/order/lists/${orderId}/status/${statusId}`, params, {
-                        headers:{
-                            'Authorization':sessionStorage.getItem('login_token')
-                        }
-                    })
+                    .delete((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${user_id}/myLists/${orderId}`)
                     .then((res: any) => {
-                        console.log(res);
+                        console.log("删除",res);
                         if (res.data.status === 'success') {
                             // 切换页面
                             this.deleted = true;
+                            Toast.success("删除成功");
+                        } else {
+                            Toast.fail(res.data.data.errorMsg);
                         }
                     })
                     .catch((err: any) => {
-                        console.log(err);
+                        Toast.fail("网络连接错误");
                     });
-                Toast.success("删除成功！");
-            }).catch((err) => {
+                })
+            .catch((err: any) => {
                 // on cancel
                 console.log(err);
             });
@@ -296,9 +282,6 @@
                 font-size: 1.4rem;
                 font-weight: bold;
                 color: darken(@mainColor,8%);
-                display: flex;
-                flex-direction: row;
-                justify-content: space-between;
             }
             .detail-info {
                 margin-top: 1rem;

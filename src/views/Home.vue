@@ -1,10 +1,15 @@
 <template>
   <div class="home">
     <!---------------头部搜索框---------------->
-    <div class="header">
-      <div class="logo">logo</div>
-      <input type="text" placeholder="搜索订单..."></input>
-      <span class="iconfont icon-yonghu" @click="toMe()"></span>
+    <div class="header-wrapper">
+      <div class="header-content">
+        <div class="logo">Fehead</div>
+        <input type="text" placeholder="请输入订单目的地" @focus="focused = true" @keyup="focused = false" @keyup.enter="searchByDestination" v-model="desInput"></input>
+        <span class="iconfont icon-yonghu" @click="toMe()"></span>
+      </div>
+      <div class="tag-advice" v-if="focused">
+        <div class="tag" v-for="item in expressPoints"><div @click="clickTag(item)">{{item.deliveryPoint}}</div></div>
+      </div>
     </div>
     <!--------------订单列表------------------>
     <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
@@ -15,8 +20,9 @@
           </div>
           <div class="other-wrapper">
             <div class="deliveryInfo">
-              <div>
-                <b>{{list.deliveryPoint.area}} {{list.deliveryPoint.deliveryPoint}}</b>
+              <div class="deliveryPoint">
+                <div><b>{{list.deliveryPoint.area}}</b></div>
+                <div><b>{{list.deliveryPoint.deliveryPoint}}</b></div>
               </div>
               <div class="deadline">截止时间：{{list.deadline}}</div>
             </div>
@@ -43,33 +49,84 @@ import {Toast} from 'vant';
   },
 })
 export default class Home extends Vue {
+  @Provide() page:number = 1;  // 请求订单的页码
+  @Provide() expressPoints:string[] = [];
+  @Provide() desInput:string = '';
   @Provide() isLoading:boolean = false;
+  @Provide() focused:boolean = false;
   @Provide() pageLoading:boolean = true;
   // 订单列表
-  @Provide() lists:Object[] = [
-    // {
-    //   id:1,
-    //   updateTime: "2019.08.27 12:00",
-    //   deadline: "2018.10.29 16:04",
-    //   destination: "12公寓",
-    //   deliveryPoint: {
-    //     deliveryPoint: "韵达",
-    //     area: "二餐厅东侧菜鸟驿站"
-    //   },
-    //   fee: "￥5",
-    // }
-  ];
+  @Provide() lists:Object[] = [];
+
+  // 快递点搜索
+  private clickTag(point: any): void {
+    this.pageLoading = true;
+    this.focused = false;
+    // console.log(point);
+    (this as any).$axios
+      .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/order/lists/${point.id}`,{
+        params:{
+          page: 1,
+          pageSize: 10
+        },
+        headers:{
+          'Authorization':sessionStorage.getItem('login_token')
+        }
+      })
+        .then((res: any) => {
+          console.log(res);
+          this.pageLoading = false;
+          if (res.data.status === 'success') {
+            this.lists = res.data.data;
+          } else {
+            Toast.fail(res.data.data.errorMsg);
+          }
+        })
+        .catch((err: any) => {
+          this.pageLoading = false;
+          Toast.fail("网络连接错误");
+        })
+  }
+
+  // 根据目的地搜索订单
+  private searchByDestination(): void {
+    // console.info(this.desInput);
+    this.pageLoading = true;
+    let params = new URLSearchParams();
+    params.append("search",this.desInput);
+    params.append("page","1");
+    params.append("pagesize","10");
+    (this as any).$axios
+      .post((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists',params)
+          .then((res: any) => {
+            console.info("des",res);
+            this.pageLoading = false;
+            if (res.data.status === "success") {
+              this.lists = res.data.data;
+            } else {
+              Toast.fail(res.data.data.errorMsg);
+            }
+          })
+          .catch((err: any) => {
+            this.pageLoading = false;
+            Toast.fail("网络连接错误");
+          })
+  }
 
   // 下拉刷新
   private onRefresh() {
-    setTimeout(() => {
-      Toast.success('刷新成功');
-      this.isLoading = false;
-    }, 500);
+    // 刷新页面
+    this.$router.push("/aaa");
+    this.$router.go(-1);
+      setTimeout(() => {
+        Toast.success('刷新成功');
+        this.isLoading = false;
+      }, 500);
   }
 
   private forMore_receiver(index: number): void{
     sessionStorage.setItem("list_id",(this as any).lists[index].id);  //存储当前点击订单的id
+    this.$store.commit('SET_LISTID',(this as any).lists[index].id);
     (this as any).$router.push({
         name:'forMore',
         params:{
@@ -78,43 +135,113 @@ export default class Home extends Vue {
       })
   }
 
-  mounted(){
+  handleScroll() {
+    this.$nextTick(() => {
+      const el = document.querySelector('.lists-wrapper');
+      if (el) {
+        const offsetHeight = el.offsetHeight;
+        console.info("offsetHeight",offsetHeight);
+        // el.scroll = () => {
+          const scrollTop = el.scrollTop || window.pageYOffset || document.body.scrollTop;
+          console.log("scrollTop",scrollTop);
+          const scrollHeight = el.scrollHeight;
+          console.log("scrollHeight",scrollHeight);
+          if ((offsetHeight + scrollTop) >= scrollHeight) {
+            this.page ++ ;
+            // 需要执行的代码
+            (this as any).$axios
+              .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0',{
+                params:{
+                  page:this.page,
+                  pageSize:10
+                }
+              })
+              .then((res: any) => {
+                console.log("addlists", res);
+              })
+              .catch((err: any) => {
+                // Toast.fail("网络连接错误")
+              });
+          }
+        };
+      // }
+    });
+  }
+
+  mounted() {
+    // 获取所有订单
     (this as any).$axios
-        .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0',{
-          params:{
-            page:1,
-            pageSize:10
-          },
-          headers:{
-            'Authorization':sessionStorage.getItem('login_token')
-          }
-        })
-        .then((res: any) => {
-          console.log(res);
-          if (res.data.status === "success") {
-            this.pageLoading = false;
-            res.data.data.map((data: any) => {
-              data.updateTime = (this as any).resolvingDate(data.updateTime);
-              data.deadline = (this as any).resolvingDate(data.deadline);
+            .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0', {
+              params: {
+                page: 1,
+                pageSize: 10
+              }
+            })
+            .then((res: any) => {
+              console.log("lists", res);
+              if (res.data.status === "success") {
+                this.pageLoading = false;
+                res.data.data.map((data: any) => {
+                  data.updateTime = (this as any).resolvingDate(data.updateTime);
+                  data.deadline = (this as any).resolvingDate(data.deadline);
+                });
+                // 展示列表
+                this.lists = res.data.data;
+                // 获取快递点信息
+                (this as any).$axios
+                    .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/delivery', {})
+                    .then((res: any) => {
+                      // console.info("tags",res);
+                      if (res.data.status === "success") {
+                        this.expressPoints = res.data.data;
+                        this.$store.commit('SET_DELIVERYPOINTS', this.expressPoints);
+                      } else {
+                        Toast.fail(res.data.data.errorMsg);
+                      }
+                    })
+                    .catch((err: any) => {
+                      Toast.fail("网络连接错误")
+                    })
+              } else {
+                Toast.fail(res.data.data.errorMsg);
+              }
+            })
+            .catch((error: any) => {
+              this.pageLoading = false;
+              console.error("errRes", error);
             });
-            this.lists = res.data.data;
-          } else {
-            Toast.fail(res.data.errorMsg);
+    // 监听页面滚动
+    // window.addEventListener("scroll", this.handleScroll);
+    this.$nextTick(() => {
+      const el = document.querySelector('.lists-wrapper');
+      if (el) {
+        const offsetHeight = el.offsetHeight;
+        console.info("offsetHeight", offsetHeight);
+        el.onscroll = () => {
+          const scrollTop = el.scrollTop || window.pageYOffset || document.body.scrollTop;
+          console.log("scrollTop", scrollTop);
+          const scrollHeight = el.scrollHeight;
+          console.log("scrollHeight", scrollHeight);
+          if ((offsetHeight + scrollTop) >= scrollHeight) {
+            this.page++;
+            // 需要执行的代码
+            (this as any).$axios
+              .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0', {
+                params: {
+                  page: this.page,
+                  pageSize: 10
+                }
+              })
+              .then((res: any) => {
+                console.log("addlists", res);
+              })
+              .catch((err: any) => {
+                Toast.fail("网络连接错误")
+              });
           }
-        })
-        .catch((error: any) => {
-          this.pageLoading = false;
-          // 未认证，跳转至易班认证页面
-          console.log(error.response);
-          // console.log(error.response.data);
-          // console.log(error.response.status);
-          // console.log(error.response.headers);
-          if(error.response.status==403){
-            location.href = error.response.data.data.url;
-          } else {
-            Toast.fail("网络连接错误！");
-          }
-        })
+        };
+      }
+    })
   }
 
   // 进入个人中心
@@ -128,36 +255,69 @@ export default class Home extends Vue {
   @mainColor:#1DA57A;
   .home {
     width: 100%;
-    .header {
+    .header-wrapper {
       z-index: 1000;
-      .logo {
-        width: 15%;
-        text-align: center;
-        color: white;
-      };
-      input {
-        border: 0;
-        border-radius: .4rem;
-        height: 60%;
-        width: 70%;
-        padding-left: 1rem;
-        outline: none;
-        font-size: 1rem;
-        &:focus{
-          border: 1px solid tint(@mainColor,80%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: fixed;
+      top: 0;
+      background: @mainColor;
+      width: 100%;
+      padding-top: 1.6%;
+      padding-bottom: 1.6%;
+      .header-content {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        .logo {
+          width: 22%;
+          text-align: center;
+          color: white;
+        };
+        input {
+          border: 0;
+          border-radius: .4rem;
+          width: 63%;
+          padding-left: 1rem;
+          outline: none;
+          font-size: .92rem;
+          padding-top: 1%;
+          padding-bottom: 1%;
+          &:focus{
+            border: 1px solid tint(@mainColor,80%);
+          }
+        }
+        .icon-yonghu{
+          color: white;
+          font-size: 1.86rem;
+          width: 15%;
+          text-align: center;
+          &:active{
+            color: lighten(@mainColor,50%);
+          }
         }
       }
-      .icon-yonghu{
-        color: white;
-        font-size: 1.86rem;
-        width: 15%;
+      .tag-advice {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin: .2rem auto 0 auto;
+        width: 92%;
         text-align: center;
-        &:active{
-          color: lighten(@mainColor,50%);
+        .tag {
+          margin: .4rem .3rem;
+          background: white;
+          color: @mainColor;
+          border-radius: .4rem;
+          padding: .2rem .3rem;
+          &:active {
+            background-color: lighten(@mainColor,50%);
+          }
         }
       }
     }
-
     .lists-wrapper{
       margin-top: 15%;
       .lists {
@@ -172,7 +332,7 @@ export default class Home extends Vue {
           justify-content: center;
           width: 18%;
           text-align: center;
-          font-size: 1.2rem;
+          font-size: 1.4rem;
           margin-right: 5%;
           background-color: lighten(@mainColor,5%);
           color: white;
@@ -181,6 +341,10 @@ export default class Home extends Vue {
         .other-wrapper{
           margin-top: 1rem;
           margin-bottom: 1rem;
+          .deliveryPoint{
+            display: flex;
+            flex-direction: column;
+          }
           .destination{
             font-size: .92rem;
           }
