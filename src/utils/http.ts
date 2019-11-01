@@ -1,6 +1,5 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
 import { Toast } from 'vant'
-import router from '@/router'
 
 /**
  * http 请求工具类
@@ -12,7 +11,7 @@ import router from '@/router'
 // 创建axios实例
 const service = axios.create({
   timeout: 10000 // 超时时间
-})
+});
 
 // 请求拦截
 service.interceptors.request.use(
@@ -42,7 +41,8 @@ service.interceptors.response.use(
         break;
       case 403:
         errMsg = '还未登录，请先登录';
-        location.href = err.response.data.data.url;
+        // location.href = err.response.data.data.url;
+          location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
         break;
       case 408:
         errMsg = '请求超时';

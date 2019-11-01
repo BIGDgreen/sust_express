@@ -59,6 +59,7 @@ html,body{
       }
       .deadline {
         font-size: .92rem;
+          margin-top: .2rem;
       }
     }
   }

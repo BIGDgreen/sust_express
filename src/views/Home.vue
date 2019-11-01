@@ -24,11 +24,12 @@
                 <div><b>{{list.deliveryPoint.area}}</b></div>
                 <div><b>{{list.deliveryPoint.deliveryPoint}}</b></div>
               </div>
-              <div class="deadline">截止时间：{{list.deadline}}</div>
+                <div class="sponsor">发起人：{{list.displayName}}</div>
+              <div class="deadline">截止时间：{{list.deadline | formatDate}}</div>
             </div>
             <div class="destination">送至：{{list.destination}}</div>
             <div class="timeInfo">
-              发布时间：{{list.updateTime}}
+              发布时间：{{list.updateTime | formatDate}}
             </div>
           </div>
         </div>
@@ -140,12 +141,12 @@ export default class Home extends Vue {
       const el = document.querySelector('.lists-wrapper');
       if (el) {
         const offsetHeight = el.offsetHeight;
-        console.info("offsetHeight",offsetHeight);
+        // console.info("offsetHeight",offsetHeight);
         // el.scroll = () => {
           const scrollTop = el.scrollTop || window.pageYOffset || document.body.scrollTop;
-          console.log("scrollTop",scrollTop);
+          // console.log("scrollTop",scrollTop);
           const scrollHeight = el.scrollHeight;
-          console.log("scrollHeight",scrollHeight);
+          // console.log("scrollHeight",scrollHeight);
           if ((offsetHeight + scrollTop) >= scrollHeight) {
             this.page ++ ;
             // 需要执行的代码
@@ -171,52 +172,52 @@ export default class Home extends Vue {
   mounted() {
     // 获取所有订单
     (this as any).$axios
-            .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0', {
-              params: {
-                page: 1,
-                pageSize: 10
+        .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/0', {
+          params: {
+            page: 1,
+            pageSize: 10
+          }
+        })
+        .then((res: any) => {
+          console.log("订单", res);
+          if (res.data.status === "success") {
+            this.pageLoading = false;
+            // 展示列表
+            this.lists = res.data.data;
+            // 将列表中的费用改成'X元'格式
+              for ( let i: number = 0; i < this.lists.length; i ++) {
+                  (this as any).lists[i].fee = parseInt((this as any).lists[i].fee) + '元';
               }
-            })
-            .then((res: any) => {
-              console.log("lists", res);
-              if (res.data.status === "success") {
-                this.pageLoading = false;
-                res.data.data.map((data: any) => {
-                  data.updateTime = (this as any).resolvingDate(data.updateTime);
-                  data.deadline = (this as any).resolvingDate(data.deadline);
-                });
-                // 展示列表
-                this.lists = res.data.data;
-                // 获取快递点信息
-                (this as any).$axios
-                    .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/delivery', {})
-                    .then((res: any) => {
-                      // console.info("tags",res);
-                      if (res.data.status === "success") {
-                        this.expressPoints = res.data.data;
-                        this.$store.commit('SET_DELIVERYPOINTS', this.expressPoints);
-                      } else {
-                        Toast.fail(res.data.data.errorMsg);
-                      }
-                    })
-                    .catch((err: any) => {
-                      Toast.fail("网络连接错误")
-                    })
-              } else {
-                Toast.fail(res.data.data.errorMsg);
-              }
-            })
-            .catch((error: any) => {
-              this.pageLoading = false;
-              console.error("errRes", error);
-            });
+            // 获取快递点信息
+            (this as any).$axios
+                .get((this as any).baseUrl + '/api/v1.0/SUSTDelivery/view/order/lists/delivery')
+                .then((res: any) => {
+                  // console.info("tags",res);
+                  if (res.data.status === "success") {
+                    this.expressPoints = res.data.data;
+                    this.$store.commit('SET_DELIVERYPOINTS', this.expressPoints);
+                  } else {
+                    Toast.fail(res.data.data.errorMsg);
+                  }
+                })
+                .catch((err: any) => {
+                  Toast.fail("网络连接错误")
+                })
+          } else {
+            Toast.fail(res.data.data.errorMsg);
+          }
+        })
+        .catch((error: any) => {
+          this.pageLoading = false;
+          console.error("errRes", error);
+        });
     // 监听页面滚动
     // window.addEventListener("scroll", this.handleScroll);
     this.$nextTick(() => {
       const el = document.querySelector('.lists-wrapper');
       if (el) {
         const offsetHeight = el.offsetHeight;
-        console.info("offsetHeight", offsetHeight);
+        // console.info("offsetHeight", offsetHeight);
         el.onscroll = () => {
           const scrollTop = el.scrollTop || window.pageYOffset || document.body.scrollTop;
           console.log("scrollTop", scrollTop);
@@ -320,12 +321,12 @@ export default class Home extends Vue {
     }
     .lists-wrapper{
       margin-top: 15%;
+      min-height: 100vh;
       .lists {
         display: flex;
         flex-direction: row;
         margin-top: 1rem;
         padding: 0 1rem 0 0;
-
         .fee-wrapper{
           display: flex;
           flex-direction: column;

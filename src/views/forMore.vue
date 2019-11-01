@@ -14,14 +14,15 @@
                     <div>目的地：<span class="fee">{{listDetail.destination}}</span></div>
                     <div>重量：<span class="weight">{{listDetail.type}}</span></div>
                     <div>费用：<span class="fee">{{listDetail.fee}}</span></div>
-                    <div>截止时间：{{listDetail.deadline}}</div>
-                    <div>发布时间：{{listDetail.updateTime}}</div>
+                    <div>发起人：<span class="sponsor">{{listDetail.orderPickVO.pickName}}</span></div>
+                    <div>截止时间：{{listDetail.deadline | formatDate}}</div>
+                    <div>发布时间：{{listDetail.updateTime | formatDate}}</div>
                     <div class="sponsor-info" v-if=" userRole === 'sponsor' ">
                         <!--发起人可查看的信息-->
                         <div>快递号：{{listDetail.orderPickVO.pickCode}}</div>
                         <div>手机号：{{listDetail.orderPickVO.tailNumber}}</div>
                     </div>
-                    <div>备注：{{listDetail.remark}}</div>
+                    <div>备注：{{listDetail.remark || '暂无备注~'}}</div>
                 </div>
                 <div class="contact-wrapper">
                     <div class="role" v-if=" userRole === 'sponsor' ">
@@ -92,9 +93,6 @@
                 .then((res: any) => {
                     console.log("订单详情",res);
                     if (res.data.status === 'success') {
-                       // 转换时间格式
-                        res.data.data.updateTime = (this as any).resolvingDate(res.data.data.updateTime);
-                        res.data.data.deadline = (this as any).resolvingDate(res.data.data.deadline);
                         // 将type 1 2 3 转为文字
                         res.data.data.type = ForMore.transformType(res.data.data.type);
                         this.listDetail = res.data.data;

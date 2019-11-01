@@ -44,7 +44,6 @@
                         v-model="currentDate"
                         type="datetime"
                         :min-date="minDate"
-                        :max-date="maxDate"
                         :formatter="formatter"
                         @cancel="showTimePicker = false"
                         @confirm="onConfirm($event,'deadline')"
@@ -103,7 +102,6 @@
                         maxlength="100"
                         placeholder="请留下备注"
                         show-word-limit
-                        required
                 />
             </van-cell-group>
         </div>
@@ -137,7 +135,7 @@
         @Provide() minHour: number = 10;
         @Provide() maxHour: number = 20;
         @Provide() minDate: any = new Date();
-        @Provide() maxDate: any = new Date(2019, 10, 1);
+        // @Provide() maxDate: any = new Date(2019, 11, 1);
         @Provide() currentDate: any = new Date();
         @Provide() formatter(type: string, value: string) {
             if (type === 'year') {
@@ -197,11 +195,11 @@
                     if (point.deliveryPoint === value) {
                         (this as any).listDetail.deliveryPoint.id = point.id;
                     }
-                })
+                });
                 this.showAreaPicker = false;
             } else if ( type === 'deadline' ) {
                 this.new_deadline = value;
-                console.log("new_deadline:",this.new_deadline);
+                // console.log("new_deadline:",this.new_deadline);
                 const resDate = value.getFullYear() + '年' + this.p((value.getMonth() + 1)) + '月' + this.p(value.getDate()) + '日';
                 const resTime = this.p(value.getHours()) + '时' + this.p(value.getMinutes()) + '分';
                 (this as any).listDetail.deadline = resDate + resTime;
@@ -218,18 +216,15 @@
             // console.log(this.listDetail);
             // console.log(this.new_deadline);
             // console.log((this as any).TypeToNum(this.listDetail.type));
-            let id = jwt_decode(login_token).sub;
+            let id:number = jwt_decode(login_token).sub;
             let params = new URLSearchParams();
             let listDetail = (this as any).listDetail;
-            let objNull = true;
+            let objNull:boolean = true;
             // console.log("listDetail",listDetail);
+            // 除了备注其他项都不能为空
             for (let key in listDetail) {
-                // console.log("key",listDetail[key]);
-                 if ( !listDetail[key] ) {    // 有一项为空
-                    objNull = true;
-                 } else {
-                     objNull = false;
-                 }
+                // console.log(key,listDetail[key]);
+                 objNull = !!(!listDetail[key] && key !== 'remark');
             }
             if ( !objNull ) {
                 params.append('deadline',(this as any).new_deadline);
