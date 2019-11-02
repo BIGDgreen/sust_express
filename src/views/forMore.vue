@@ -14,7 +14,7 @@
                     <div>目的地：<span class="fee">{{listDetail.destination}}</span></div>
                     <div>重量：<span class="weight">{{listDetail.type}}</span></div>
                     <div>费用：<span class="fee">{{listDetail.fee}}</span></div>
-                    <div>发起人：<span class="sponsor">{{listDetail.orderPickVO.pickName}}</span></div>
+                    <div>发起人：<span class="sponsor">{{listDetail.publisher.displayName}}</span></div>
                     <div>截止时间：{{listDetail.deadline | formatDate}}</div>
                     <div>发布时间：{{listDetail.updateTime | formatDate}}</div>
                     <div class="sponsor-info" v-if=" userRole === 'sponsor' ">
@@ -40,20 +40,31 @@
                     </div>
                 </div>
             </div>
-            <div class="more-info" v-if=" clickedReceive && userRole === 'receiver' && viewMore">
-                <div>快递号</div>
-                <div class="express-number">{{listMore.pickCode}}</div>
+            <div class="more-info" v-if=" clickedReceive && userRole === 'receiver' && viewMore || userRole === 'receiver_me' && viewMore">
+                <div>取货号</div>
+                <div class="receiver_item">{{listDetail.orderPickVO.pickCode}}</div>
                 <div>手机尾号</div>
-                <div class="express-number">{{listMore.tailNumber}}</div>
-                <div>发起人姓名</div>
-                <div class="express-number">{{listMore.pickName}}</div>
+                <div class="receiver_item">{{listDetail.orderPickVO.tailNumber}}</div>
+                <div>发起人取货名</div>
+                <div class="receiver_item">{{listMore.pickName || listDetail.orderPickVO.pickName}}</div>
+                <div>发起人易班Id</div>
+                <div class="receiver_item">{{listDetail.publisher.thirdPartyId}}</div>
                 <div>发起人联系方式</div>
-                <div class="express-number">{{listDetail.publisher.telphone}}</div>
+                <div class="receiver_item">{{listDetail.publisher.telphone}}</div>
                 <div class="wranning">请妥善保管以上信息</div>
             </div>
-            <div class="more-info" v-if="viewReceiver">
-                <div>接单人联系方式</div>
-                <div class="express-number">{{listDetail.receiver.telphone|| "暂无接单者~"}}</div>
+            <div v-if="viewReceiver">
+                <div class="more-info" v-if="!listDetail.receiver.id">
+                    <div class="receiver_item">暂无接单者~</div>
+                </div>
+                <div class="more-info" v-if="listDetail.receiver.id">
+                    <div>接单人用户名</div>
+                    <div class="receiver_item">{{listDetail.receiver.displayName}}</div>
+                    <div>接单人易班Id</div>
+                    <div class="receiver_item">{{listDetail.receiver.thirdPartyId}}</div>
+                    <div>接单人联系方式</div>
+                    <div class="receiver_item">{{listDetail.receiver.telphone}}</div>
+                </div>
             </div>
         </div>
         <div class="delete-page" v-if="deleted">订单已删除！</div>
@@ -84,6 +95,9 @@
             } else if (this.$route.params.role === 'sponsor') {
                 // this.$store.commit('SET_USERROLE','sponsor');
                 this.userRole = 'sponsor';
+            } else if (this.$route.params.role === 'receiver_me') {
+                this.userRole = 'receiver_me';
+                this.viewMore = true;
             }
             // 获取指定订单的详细信息
             // let id = sessionStorage.getItem("list_id");
@@ -343,9 +357,8 @@
                 font-size: 1.6rem;
             }
         }
-
         .more-info{
-            margin: 5% auto 0 auto;
+            margin: 5% auto;
             width: 80%;
             border: .5px solid #eee;
             border-radius: .5rem;
@@ -357,7 +370,7 @@
             div {
                 margin-top: .6rem;
             }
-            .express-number{
+            .receiver_item{
                 color: darken(@mainColor,5%);
                 font-weight: bold;
                 font-size: 1.6rem;

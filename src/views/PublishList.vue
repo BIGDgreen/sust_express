@@ -59,7 +59,7 @@
                 <van-field
                         v-model="listDetail.publisher.pickName"
                         label='取货人姓名'
-                        placeholder="请输入您的淘宝会员名"
+                        placeholder="请输入取货人姓名"
                         required
                 />
                 <van-field
@@ -100,7 +100,7 @@
                         label="备注"
                         type="textarea"
                         maxlength="100"
-                        placeholder="请留下备注"
+                        placeholder="请留下备注（选填）"
                         show-word-limit
                 />
             </van-cell-group>

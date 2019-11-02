@@ -3,10 +3,13 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import axios from './utils/http'
+import './registerHooks.js'
 // 引入iconfont字体图标
 import '@/assets/iconfont.css'
 // 引入ant-design-vue组件
 import {Dialog, Field, Loading, PullRefresh, Tab, Tabs, Toast} from 'vant';
+// 引入下拉加载、上拉刷新组件
+import MescrollVue from 'mescroll.js/mescroll.vue'
 
 Vue.prototype.$axios = axios;
 Vue.use(Tab).use(Tabs).use(Toast).use(Dialog).use(PullRefresh).use(Field).use(Loading);

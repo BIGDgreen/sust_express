@@ -41,8 +41,8 @@ service.interceptors.response.use(
         break;
       case 403:
         errMsg = '还未登录，请先登录';
-        // location.href = err.response.data.data.url;
-          location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
+        location.href = err.response.data.data.url;
+          // location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
         break;
       case 408:
         errMsg = '请求超时';

@@ -144,7 +144,7 @@
             this.$store.commit('SET_LISTID',this.joinLists[index].id);
             (this as any).$router.push({
                 name:'forMore',
-                params:{"role":"receiver"}
+                params:{"role":"receiver_me"}
             });
             sessionStorage.setItem("list_id",this.joinLists[index].id);
         }
