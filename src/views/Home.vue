@@ -108,7 +108,7 @@ export default class Home extends Vue {
           for ( let i: number = 0; i < this.lists.length; i ++) {
             (this as any).lists[i].fee = parseInt((this as any).lists[i].fee) + '元';
           }
-          console.info("分页数据",res.data.data);
+          // console.info("分页数据",res.data.data);
           if (res.data.data.length > 0) {   // 当下一页有数据时
             data_lists = res.data.data;
             let data = page.num === 1 ? [] : that.lists;
@@ -208,17 +208,6 @@ export default class Home extends Vue {
             Toast.fail("网络连接错误");
           })
   }
-
-  // 下拉刷新
-  // private onRefresh() {
-  //   // 刷新页面
-  //   this.$router.push("/aaa");
-  //   this.$router.go(-1);
-  //     setTimeout(() => {
-  //       Toast.success('刷新成功');
-  //       this.isLoading = false;
-  //     }, 500);
-  // }
 
   private forMore_receiver(index: number): void{
     sessionStorage.setItem("list_id",(this as any).lists[index].id);  //存储当前点击订单的id

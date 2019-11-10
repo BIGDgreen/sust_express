@@ -72,62 +72,74 @@
         @Provide() noJoin: boolean = true;
         @Provide() createLists: Object[] = [];
         @Provide() joinLists: Object[] = [];
-        mounted() {
-            let userInfos = sessionStorage.getItem("userInfoStore") || "";
+        private mounted() {
+            let userInfos = sessionStorage.getItem('userInfoStore') || '';
             // console.info(JSON.parse(userInfos));
+            let id: string = '';
             // 获取头像
-            this.userAvatar = JSON.parse(userInfos).avatar;
-          // 获取与我有关的订单
-            let id = JSON.parse(userInfos).id;
-            // 我发起的
-            (this as any).$axios
-                .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/myLists`, {
-                    params: {
-                      page: 1,
-                      pagesize: 10
-                    }
-                })
-                .then((res: any) => {
-                    console.info("launch",res);
-                    if (res.data.status === 'success') {
-                        if (res.data.data.length === 0) {
-                            this.noLaunch = true;
-                        } else {
-                            this.noLaunch = false;
-                            this.createLists = res.data.data;
+            if (!userInfos) {       // 用户信息为空
+                (this as any).$axios
+                    .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/oauth`)
+                    .then((res: any) => {
+                        console.log(res);
+                    })
+                    .catch((err: any) => {
+                        console.error(err);
+                    })
+            } else {
+                this.userAvatar = JSON.parse(userInfos).avatar;
+                // 获取与我有关的订单
+                id = JSON.parse(userInfos).id;
+                // 我发起的
+                (this as any).$axios
+                    .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/myLists`, {
+                        params: {
+                            page: 1,
+                            pagesize: 10
                         }
-                    } else {
-                        Toast(res.data.errorMsg);
-                    }
-                })
-                .catch((err: any) => {
-                    console.error(err);
-                });
+                    })
+                    .then((res: any) => {
+                        console.info('launch', res);
+                        if (res.data.status === 'success') {
+                            if (res.data.data.length === 0) {
+                                this.noLaunch = true;
+                            } else {
+                                this.noLaunch = false;
+                                this.createLists = res.data.data;
+                            }
+                        } else {
+                            Toast(res.data.errorMsg);
+                        }
+                    })
+                    .catch((err: any) => {
+                        console.error(err);
+                    });
 
-            // 我加入的
-            (this as any).$axios
-            .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/theirList`, {
-                params: {
-                    page: 1,
-                    pagesize: 10
-                }
-            })
-            .then((res: any) => {
-                console.info("join",res);
-                if (res.data.status === 'success') {
-                    if (res.data.data.length === 0) {
-                        this.noJoin = true;
-                    } else {
-                        this.noJoin = false;
-                        this.joinLists = res.data.data;
-                    }
-                } else {
-                    Toast(res.data.errorMsg);
-                }
-            })
-            .catch((err: any) => {
-                console.error(err);
-            })
+                // 我加入的
+                (this as any).$axios
+                    .get((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/theirList`, {
+                        params: {
+                            page: 1,
+                            pagesize: 10
+                        }
+                    })
+                    .then((res: any) => {
+                        console.info("join",res);
+                        if (res.data.status === 'success') {
+                            if (res.data.data.length === 0) {
+                                this.noJoin = true;
+                            } else {
+                                this.noJoin = false;
+                                this.joinLists = res.data.data;
+                            }
+                        } else {
+                            Toast(res.data.errorMsg);
+                        }
+                    })
+                    .catch((err: any) => {
+                        console.error(err);
+                    })
+            }
         }
         // 发起人查看订单详细信息
         private forMore_sponsor(index: number): void {

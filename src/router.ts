@@ -21,6 +21,11 @@ export const asyncRouterMap = [
         component: () => import('./views/ForMore.vue'),
     },
   {
+    path: '/forMore/report',
+    name: 'report',
+    component: () => import('./views/Report.vue'),
+  },
+  {
     path: '/aboutMe/publishList',
     name: 'publishList',
     component: () => import('./views/PublishList.vue'),

@@ -6,13 +6,15 @@ import axios from './utils/http'
 import './registerHooks.js'
 // 引入iconfont字体图标
 import '@/assets/iconfont.css'
-// 引入ant-design-vue组件
-import {Dialog, Field, Loading, PullRefresh, Tab, Tabs, Toast} from 'vant';
+// 引入vant组件
+import {Dialog, Field, Loading, PullRefresh, Tab, Tabs, Toast, Checkbox, CheckboxGroup, Uploader, CellGroup} from 'vant';
 // 引入下拉加载、上拉刷新组件
 import MescrollVue from 'mescroll.js/mescroll.vue'
+// import axios1 from 'axios'
+// Vue.prototype.axios = axios1;
 
 Vue.prototype.$axios = axios;
-Vue.use(Tab).use(Tabs).use(Toast).use(Dialog).use(PullRefresh).use(Field).use(Loading);
+Vue.use(Tab).use(Tabs).use(Toast).use(Dialog).use(PullRefresh).use(Field).use(Loading).use(Checkbox).use(CheckboxGroup).use(Uploader).use(CellGroup);
 
 // Vue.prototype.baseUrl = 'http://192.168.0.116:8081';  // 2A311
 // Vue.prototype.baseUrl = 'http://10.111.210.229:8081';  // SUST

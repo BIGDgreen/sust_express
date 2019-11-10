@@ -16,10 +16,10 @@
             />
             <van-popup v-model="showAreaPicker" position="bottom">
                 <van-picker
-                        show-toolbar
-                        :columns="columns"
-                        @cancel="showAreaPicker = false"
-                        @confirm="onConfirm($event,'deliveryPoint')"
+                    show-toolbar
+                    :columns="columns"
+                    @cancel="showAreaPicker = false"
+                    @confirm="onConfirm($event,'deliveryPoint')"
                 />
             </van-popup>
             <van-cell-group>
@@ -166,12 +166,12 @@
             remark: '',
             telNumber:'',
             publisher: {
-                telphone: '12345678901',
+                telphone: '',
                 email: '',
                 registerMode: '',
                 thirdPartyId: '',
-                avatar: 'http://b-ssl.duitang.com/uploads/item/201809/16/20180916120134_myspq.jpeg',
-                displayName: 'Maira',
+                avatar: '',
+                displayName: '',
                 pickName:''
             },
             pickCode: '',
@@ -182,6 +182,7 @@
             this.$store.state.deliveryPoints.map((point: any) => {
                 this.columns.push(point.deliveryPoint);
             })
+            // console.log(this.columns);
         }
 
         returnHome() {
@@ -221,11 +222,22 @@
             let listDetail = (this as any).listDetail;
             let objNull:boolean = true;
             // console.log("listDetail",listDetail);
-            // 除了备注其他项都不能为空
+            // 除了备注和发布时间其他项都不能为空
             for (let key in listDetail) {
-                // console.log(key,listDetail[key]);
-                 objNull = !!(!listDetail[key] && key !== 'remark');
+                console.log(key,listDetail[key]);
+                 // objNull = !!(!listDetail[key] && key !== 'remark');
+                 if (!listDetail[key] && key !== 'remark' && key !== 'updateTime') {
+                     objNull = true;
+                     break;
+                 } else {
+                     if (!listDetail.deliveryPoint.deliveryPoint) {     // 快递公司为空
+                         objNull = true;
+                     } else {
+                         objNull = false;
+                     }
+                 }
             }
+            console.log(objNull);
             if ( !objNull ) {
                 params.append('deadline',(this as any).new_deadline);
                 params.append('deliveryPointId',listDetail.deliveryPoint.id);
@@ -237,11 +249,7 @@
                 params.append('tailNumber',listDetail.telNumber);
                 params.append('type',(this as any).TypeToNum(listDetail.type));
 
-                (this as any).$axios.post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/commit`, params, {
-                    headers:{
-                        'Authorization':sessionStorage.getItem('login_token')
-                    }
-                })
+                (this as any).$axios.post((this as any).baseUrl + `/api/v1.0/SUSTDelivery/view/user/${id}/commit`, params)
                     .then((res: any) => {
                         console.log("发布订单",res);
                         if (res.data.status === 'success') {

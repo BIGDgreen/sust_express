@@ -47,7 +47,6 @@ html,body{
     &:active{
       background: lighten(@mainColor,55%);
     }
-
     .deliveryInfo{
       margin-bottom: .48rem;
       div:nth-child(1){

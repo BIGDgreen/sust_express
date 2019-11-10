@@ -41,8 +41,22 @@ service.interceptors.response.use(
         break;
       case 403:
         errMsg = '还未登录，请先登录';
-        location.href = err.response.data.data.url;
-          // location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
+        // location.href = err.response.data.data.url;
+        location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
+        // service.get('https://openapi.yiban.cn/oauth/authorize',{
+        //     params: {
+        //       client_id: '152e7eb86cd4ab3d',     // appID
+        //       redirect_uri:'http://f.yiban.cn/iapp526538'     // 站内地址
+        //     }
+        //   })
+        //       .then((res) => {
+        //         console.log(res);   // code
+        //         location.href = 'http://yiban.sust.edu.cn/yibanapi/?backurl=http://192.168.0.110:8081/blank';
+        //         // 根据code获取access_token
+        //       })
+        //       .catch((err) => {
+        //         console.error("oauth-error",err)
+        //       });
         break;
       case 408:
         errMsg = '请求超时';

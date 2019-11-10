@@ -59,7 +59,7 @@
                 </div>
                 <div class="more-info" v-if="listDetail.receiver.id">
                     <div>接单人用户名</div>
-                    <div class="receiver_item">{{listDetail.receiver.displayName}}</div>
+                    <div><span class="receiver_item">{{listDetail.receiver.displayName}}</span><span class="iconfont icon-jubao" @click="toReport">举报</span></div>
                     <div>接单人易班Id</div>
                     <div class="receiver_item">{{listDetail.receiver.thirdPartyId}}</div>
                     <div>接单人联系方式</div>
@@ -139,6 +139,24 @@
         // 返回首页
         private returnHome(): void {
             this.$router.go(-1);
+        }
+        // 跳转到举报页面
+        private toReport(): void {
+            Dialog.confirm({
+                title: '提示',
+                message: '是否确定举报该用户？',
+            }).then(() => {
+                // 确定
+                this.$router.push({
+                    name: 'report',
+                    params: {
+                        reportedUser: (this as any).listDetail.receiver.displayName
+                    }
+                });
+            })
+            .catch(() => {
+                // on cancel
+            });
         }
         // 接单人点击接单按钮，显示相关信息
         private clickReceive(): void {
@@ -374,6 +392,11 @@
                 color: darken(@mainColor,5%);
                 font-weight: bold;
                 font-size: 1.6rem;
+            }
+            .icon-jubao {
+                margin-left: .4rem;
+                color: #b3b3b3;
+                font-size: .8rem;
             }
             .wranning {
                 font-size: .8rem;
